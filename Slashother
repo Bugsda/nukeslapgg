@@ -279,3 +279,90 @@ end
 
 wait(1)
 CreateActivateButton()
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+-- Biến điều khiển
+local antiKnockbackEnabled = false
+
+-- Giao diện
+local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+screenGui.Name = "AntiEffectsGUI"
+screenGui.ResetOnSpawn = false
+
+local button = Instance.new("TextButton", screenGui)
+button.Size = UDim2.new(0, 140, 0, 35)
+button.Position = UDim2.new(0.8458720445632935)
+button.Text = "Anti Knockback: OFF"
+button.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+button.TextSize = 16
+button.Font = Enum.Font.SourceSansBold
+button.BorderSizePixel = 1 -- Viền đen nhẹ
+button.BorderColor3 = Color3.new(0, 0, 0) -- Màu đen
+
+-- Thêm âm thanh click
+local clickSound = Instance.new("Sound")
+clickSound.SoundId = "rbxassetid://12221967"
+clickSound.Volume = 5
+clickSound.Parent = button
+
+-- Hàm chống knockback
+local function blockEffects()
+	local char = LocalPlayer.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+	for _, v in ipairs(char.HumanoidRootPart:GetChildren()) do
+		if v:IsA("BodyVelocity") or v:IsA("VectorForce") or v:IsA("BodyForce") then
+			v:Destroy()
+		end
+	end
+
+	for _, v in ipairs(char:GetDescendants()) do
+		if v:IsA("RagdollConstraint") then
+			v:Destroy()
+		end
+	end
+
+	for _, v in ipairs(char:GetChildren()) do
+		if v:IsA("BoolValue") and (v.Name:lower():find("stun") or v.Name:lower():find("slow")) then
+			v:Destroy()
+		end
+	end
+
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Physics then
+		humanoid:ChangeState(Enum.HumanoidStateType.Running)
+	end
+end
+
+-- Theo dõi liên tục nếu bật
+RunService.Stepped:Connect(function()
+	if antiKnockbackEnabled then
+		pcall(blockEffects)
+	end
+end)
+
+-- Toggle GUI
+button.MouseButton1Click:Connect(function()
+	clickSound:Play()
+	antiKnockbackEnabled = not antiKnockbackEnabled
+	if antiKnockbackEnabled then
+		button.Text = "Anti Knockback: ON"
+		button.BackgroundColor3 = Color3.fromRGB(80, 255, 100)
+	else
+		button.Text = "Anti Knockback: OFF"
+		button.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+	end
+end)
+
+-- Gán lại khi hồi sinh
+LocalPlayer.CharacterAdded:Connect(function(char)
+	repeat wait() until char:FindFirstChild("HumanoidRootPart")
+	if antiKnockbackEnabled then
+		pcall(blockEffects)
+	end
+end)
+wait(2)
