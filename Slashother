@@ -7,15 +7,22 @@ end
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService") -- Dùng để cập nhật màu liên tục
 
 local ScreenGui = Instance.new("ScreenGui")
 local ToggleButton = Instance.new("TextButton")
 local TitleLabel = Instance.new("TextLabel")
-local WarningLabel = Instance.new("TextLabel") -- Thêm label cảnh báo
+local WarningLabel = Instance.new("TextLabel")
 
 ScreenGui.Name = "SlapGUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
+
+-- Tạo âm thanh click
+local clickSound = Instance.new("Sound")
+clickSound.SoundId = "rbxassetid://12221967" -- ID âm thanh click, có thể thay bằng ID khác
+clickSound.Volume = 5
+clickSound.Parent = ToggleButton
 
 -- Nút bật/tắt slap
 ToggleButton.Name = "ToggleButton"
@@ -56,6 +63,7 @@ WarningLabel.TextXAlignment = Enum.TextXAlignment.Left
 local isSlapping = false
 
 ToggleButton.MouseButton1Click:Connect(function()
+    clickSound:Play() -- Phát âm thanh khi nhấn
     isSlapping = not isSlapping
     ToggleButton.Text = isSlapping and "Slap: ON" or "Slap: OFF"
 
@@ -80,16 +88,38 @@ ToggleButton.MouseButton1Click:Connect(function()
                         end
                     end
                 end
-                wait()
+                task.wait()
             end
         end)
-   
- else
+    else
         WarningLabel.Text = ""
+    end
+end)
+
+-- Hiệu ứng cầu vồng cho nút
+spawn(function()
+    local t = 0
+    while true do
+        t = t + 0.01
+        local r = math.sin(t) * 127 + 128
+        local g = math.sin(t + 2) * 127 + 128
+        local b = math.sin(t + 4) * 127 + 128
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(r, g, b)
+        task.wait(0.02)
     end
 end)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+
+-- Hàm phát âm thanh khi nhấn nút
+local function playClickSound(parent)
+	local sound = Instance.new("Sound")
+	sound.SoundId = "rbxassetid://12221967" -- ID âm thanh click (có thể thay)
+	sound.Volume = 5
+	sound.PlayOnRemove = true
+	sound.Parent = parent
+	sound:Destroy() -- Khi destroy sẽ phát nếu PlayOnRemove = true
+end
 
 -- Hàm tạo nút kích hoạt
 local function CreateActivateButton()
@@ -109,6 +139,7 @@ local function CreateActivateButton()
 	ActivateButton.Parent = ActivateGui
 
 	ActivateButton.MouseButton1Click:Connect(function()
+		playClickSound(ActivateButton)
 		ActivateGui:Destroy()
 
 		local ScreenGui = Instance.new("ScreenGui")
@@ -124,7 +155,6 @@ local function CreateActivateButton()
 		Frame.BorderSizePixel = 0
 		Frame.Parent = ScreenGui
 
-		-- Cho phép kéo Frame
 		local drag = Instance.new("TextButton")
 		drag.Size = Frame.Size
 		drag.Position = Frame.Position
@@ -157,7 +187,6 @@ local function CreateActivateButton()
 			end
 		end)
 
-		-- Nút Tắt GUI
 		local CloseButton = Instance.new("TextButton")
 		CloseButton.Size = UDim2.new(0, 30, 0, 30)
 		CloseButton.Position = UDim2.new(1, -35, 0, 5)
@@ -169,6 +198,7 @@ local function CreateActivateButton()
 		CloseButton.Parent = Frame
 
 		CloseButton.MouseButton1Click:Connect(function()
+			playClickSound(CloseButton)
 			ScreenGui:Destroy()
 			CreateActivateButton()
 		end)
@@ -217,6 +247,7 @@ local function CreateActivateButton()
 			button.Parent = Scroll
 
 			button.MouseButton1Click:Connect(function()
+				playClickSound(button)
 				local targetChar = player.Character
 				if not targetChar then return end
 
@@ -245,6 +276,6 @@ local function CreateActivateButton()
 		end)
 	end)
 end
+
 wait(1)
--- Gọi lần đầu
 CreateActivateButton()
